@@ -1,0 +1,43 @@
+name: FinPlans CI
+
+# Запускать проверку при любом пуше или создании Pull Request в ветку main
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        # Проверяем совместимость с текущей стабильной версией Flutter
+        flutter-version: ['stable']
+        
+    steps:
+      # Шаг 1: Получаем исходный код проекта
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Шаг 2: Устанавливаем нужную версию Flutter из матрицы
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ matrix.flutter-version }}
+          cache: true # Включаем кэширование для ускорения сборок
+
+      # Шаг 3: Получаем зависимости (пакеты)
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Шаг 4: Статический анализ кода (Линтер)
+      # Если здесь есть ошибка, дальнейшие шаги не выполнятся
+      - name: Analyze code
+        run: flutter analyze
+
+      # Шаг 5: Запуск Unit-тестов
+      # Тесты должны быть написаны в папке test/
+      - name: Run tests
+        run: flutter test --no-pub
